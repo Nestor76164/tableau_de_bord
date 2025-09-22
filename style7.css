@@ -1,0 +1,419 @@
+/* CSS général */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.3)),
+        url('biomediacldevice.jpg') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    color: #333;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.profile-dropdown {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 200px;
+    z-index: 100;
+}
+
+.profile-dropdown a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #333;
+}
+
+.profile-dropdown a:hover {
+    background-color: #f5f5f5;
+}
+
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin: 50px auto;
+    width: 60%;
+}
+
+.search-bar {
+    width: 100%;
+    position: relative;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 15px 20px;
+    border-radius: 30px;
+    border: none;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    outline: none;
+}
+
+.search-bar button {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    background: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.dashboard {
+    display: flex;
+    /* Flexbox */
+    justify-content: center;
+    /* Centrage horizontal */
+    align-items: center;
+    /* Centrage vertical */
+    gap: 100px;
+    /* Espace entre les cartes */
+    height: 50vh;
+    /* Hauteur pour centrer verticalement */
+    padding: 0 40px 40px;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card h3 {
+    margin-bottom: 15px;
+    color: #4285f4;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    /* espace égal entre les blocs */
+    margin: 30px auto;
+    width: 80%;
+    gap: 20px;
+    /* espace entre chaque bloc */
+}
+
+.stat-item {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: 0.2s;
+
+    flex: 1;
+    /* tous les blocs prennent la même largeur */
+    min-width: 150px;
+    /* largeur minimale */
+    max-width: 200px;
+    /* largeur maximale si nécessaire */
+    height: 120px;
+    /* hauteur fixe pour tous les blocs */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.stat-item:hover {
+    background: #f0f0f0;
+}
+
+.stat-item .number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4285f4;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 200;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content h2 {
+    margin-bottom: 10px;
+    color: #4285f4;
+}
+
+.close-btn {
+    float: right;
+    cursor: pointer;
+    font-weight: bold;
+    color: red;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th,
+td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+}
+
+th {
+    background-color: #4285f4;
+    color: white;
+}
+
+/* Formulaire stylisé */
+form label {
+    display: block;
+    margin: 8px 0 4px;
+    font-weight: bold;
+}
+
+form input,
+form select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+form input:focus,
+form select:focus {
+    outline: none;
+    border-color: #4285f4;
+    box-shadow: 0 0 5px rgba(66, 133, 244, 0.5);
+}
+
+form button {
+    padding: 10px 15px;
+    background: #4285f4;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background: #3367d6;
+}
+
+/* Boutons actions rapides */
+.card button {
+    padding: 10px 20px;
+    margin-right: 10px;
+    margin-top: 5px;
+    background-color: #4285f4;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.card button:hover {
+    background-color: #3367d6;
+    transform: translateY(-2px);
+}
+
+.card button:active {
+    transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats {
+        flex-direction: column;
+        width: 90%;
+        gap: 15px;
+    }
+
+    .dashboard {
+        padding: 0 20px 40px;
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* Liste des appareils dans les cartes ou modals */
+#recentDevices,
+#alerts,
+#normalDevices,
+.modal ul {
+    list-style: none;
+    /* Supprime les puces */
+    padding: 0;
+    margin: 0;
+}
+
+#recentDevices li,
+#alerts li,
+#normalDevices li,
+.modal ul li {
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    background: rgba(66, 133, 244, 0.1);
+    /* Fond léger bleu */
+    border-left: 5px solid #4285f4;
+    /* Bandeau gauche coloré */
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+#recentDevices li:hover,
+#alerts li:hover,
+#normalDevices li:hover,
+.modal ul li:hover {
+    background: rgba(66, 133, 244, 0.2);
+    transform: translateX(5px);
+    /* Petit effet de mouvement */
+}
+
+/* Pour les appareils critiques, tu peux différencier */
+.critical-device {
+    border-left-color: #d93025;
+    /* Rouge pour les critiques */
+    font-weight: bold;
+    background: rgba(217, 48, 37, 0.1);
+}
+
+/* Pour les appareils normaux */
+.normal-device {
+    border-left-color: #34a853;
+    /* Vert pour les normaux */
+}
+
+/* Listes avec scroll */
+#recentDevices,
+#alerts {
+    max-height: 200px;
+    /* Hauteur maximale du bloc */
+    overflow-y: auto;
+    /* Activation du scroll vertical */
+    padding-right: 5px;
+    /* Pour éviter que le scroll chevauche le contenu */
+}
+
+/* Optionnel : joli scroll pour Chrome */
+#recentDevices::-webkit-scrollbar,
+#alerts::-webkit-scrollbar {
+    width: 6px;
+}
+
+#recentDevices::-webkit-scrollbar-thumb,
+#alerts::-webkit-scrollbar-thumb {
+    background-color: rgba(66, 133, 244, 0.5);
+    border-radius: 3px;
+}
+
+/* Styles communs pour toutes les listes d'appareils */
+#allDevicesList,
+#normalDevices,
+#maintenanceDevices,
+#criticalDevices,
+.modal ul {
+    max-height: 250px;
+    /* Hauteur fixe pour tous les blocs */
+    overflow-y: auto;
+    /* Scroll vertical si le contenu dépasse */
+    padding-right: 5px;
+    /* Pour éviter que le scroll chevauche le contenu */
+}
+
+/* Scroll custom léger (pour Chrome/Edge) */
+#allDevicesList::-webkit-scrollbar,
+#normalDevices::-webkit-scrollbar,
+#maintenanceDevices::-webkit-scrollbar,
+#criticalDevices::-webkit-scrollbar,
+.modal ul::-webkit-scrollbar {
+    width: 6px;
+}
+
+#allDevicesList::-webkit-scrollbar-thumb,
+#normalDevices::-webkit-scrollbar-thumb,
+#maintenanceDevices::-webkit-scrollbar-thumb,
+#criticalDevices::-webkit-scrollbar-thumb,
+.modal ul::-webkit-scrollbar-thumb {
+    background-color: rgba(66, 133, 244, 0.5);
+    border-radius: 3px;
+}

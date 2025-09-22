@@ -1,0 +1,15 @@
+h1{
+width: 100px;
+text-align: center;
+margin: auto;
+color: blue;
+font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+body{ 
+    background-color: aquamarine;
+}  
+
+p{ 
+    width: 70px;
+}  

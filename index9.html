@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord Ingénieur</title>
+    <link rel="stylesheet" href="style7.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+</head>
+
+<body>
+    <header class="header">
+        <h1>Tableau de bord Ingénieur</h1>
+        <div class="profile" id="profile">
+            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profil">
+            <span>Ir. Lysa RUBUGA</span>
+            <div class="profile-dropdown" id="profileDropdown">
+                <a href="#">Mon Profil</a>
+                <a href="#">Paramètres</a>
+                <a href="#">Déconnexion</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="search-container">
+        <div class="search-bar">
+            <input type="text" placeholder="Rechercher un appareil par référence, modèle...">
+            <button>🔍</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item" id="allDevices">
+            <div class="number">0</div>
+            <div class="label">Tous les appareils</div>
+        </div>
+        <div class="stat-item" id="normalDevices">
+            <div class="number">0</div>
+            <div class="label">Normaux</div>
+        </div>
+        <div class="stat-item" id="maintenanceDevices">
+            <div class="number">0</div>
+            <div class="label">En maintenance</div>
+        </div>
+        <div class="stat-item" id="criticalDevices">
+            <div class="number">0</div>
+            <div class="label">Critiques</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="card">
+            <h3>Derniers appareils ajoutés</h3>
+            <ul id="recentDevices"></ul>
+        </div>
+        <div class="card">
+            <h3>Alertes récentes</h3>
+            <ul id="alerts"></ul>
+        </div>
+        <div class="card">
+            <h3>Actions rapides</h3>
+            <button id="btnAddDevice">Ajouter un appareil</button>
+            <button id="btnGenerateReport">Générer un rapport</button>
+        </div>
+    </div>
+
+    <!-- Modal détails -->
+    <div class="modal" id="deviceModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <div id="modalList"></div>
+        </div>
+    </div>
+
+    <!-- Modal ajout -->
+    <div class="modal" id="addDeviceModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeAddModal">&times;</span>
+            <h2>Ajouter un appareil</h2>
+            <form id="addDeviceForm">
+                <label>Nom de l'appareil :</label>
+                <input type="text" id="deviceName" required>
+
+                <label>État :</label>
+                <select id="deviceEtat" required>
+                    <option value="Normal">Normal</option>
+                    <option value="Critique">Critique</option>
+                    <option value="Maintenance">Maintenance</option>
+                </select>
+
+                <label>Température :</label>
+                <input type="number" id="deviceTemp">
+
+                <label>Pression :</label>
+                <input type="number" id="devicePression">
+
+                <label>Vibration :</label>
+                <input type="number" id="deviceVibration">
+
+                <button type="submit">Enregistrer</button>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="reportOverlay"
+        style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:300;">
+        <div style="background:#fff;padding:20px;border-radius:10px;font-size:18px;color:#4285f4;">Préparation du
+            rapport.....</div>
+    </div>
+
+
+
+    <!-- Scripts Firebase et fonctionnels -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBkeYhHZc9Na0UHjETg9GABYsDZFx1bLtQ",
+            authDomain: "esp32-b9013.firebaseapp.com",
+            databaseURL: "https://esp32-b9013-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "esp32-b9013",
+            storageBucket: "esp32-b9013.appspot.com",
+            messagingSenderId: "547189202345",
+            appId: "1:547189202345:web:054bd09f1f7e66f7b538b8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const modal = document.getElementById("deviceModal");
+        const modalTitle = document.getElementById("modalTitle");
+        const modalList = document.getElementById("modalList");
+        const closeModal = document.getElementById("closeModal");
+
+        const addModal = document.getElementById("addDeviceModal");
+        const closeAddModal = document.getElementById("closeAddModal");
+        const addForm = document.getElementById("addDeviceForm");
+
+        const recentDevicesList = document.getElementById('recentDevices');
+        const alertsList = document.getElementById('alerts');
+
+        let devicesDetails = {};
+        let allDevices = [];
+        let normalDevices = [];
+        let maintenanceDevices = [];
+        let criticalDevices = [];
+        let recentDevices = [];
+        let alerts = [];
+
+        const devicesRef = ref(db, "devices");
+        onValue(devicesRef, (snapshot) => {
+            const data = snapshot.val() || {};
+            devicesDetails = data;
+
+            allDevices = Object.keys(data);
+            normalDevices = allDevices.filter(d => data[d].Etat === "Normal");
+            maintenanceDevices = allDevices.filter(d => data[d].Etat === "Maintenance");
+            criticalDevices = allDevices.filter(d => data[d].Etat === "Critique");
+            recentDevices = allDevices.slice(-5);
+            alerts = criticalDevices.map(d => `⚠️ ${d} critique`);
+
+            document.querySelector("#allDevices .number").textContent = allDevices.length;
+            document.querySelector("#normalDevices .number").textContent = normalDevices.length;
+            document.querySelector("#maintenanceDevices .number").textContent = maintenanceDevices.length;
+            document.querySelector("#criticalDevices .number").textContent = criticalDevices.length;
+
+            recentDevicesList.innerHTML = "";
+            recentDevices.forEach(d => {
+                const li = document.createElement("li");
+                li.textContent = d;
+                li.style.cursor = "pointer";
+                li.addEventListener("click", () => showDeviceDetails(d));
+                recentDevicesList.appendChild(li);
+            });
+
+            alertsList.innerHTML = "";
+            alerts.forEach(a => {
+                const li = document.createElement("li");
+                li.textContent = a;
+                alertsList.appendChild(li);
+            });
+        });
+
+        let deviceChart = null; // stockage global du graphique pour pouvoir le mettre à jour
+
+        function showDeviceDetails(deviceName) {
+            modalTitle.textContent = `Détails - ${deviceName}`;
+            modalList.innerHTML = "";
+
+            // Création du canvas pour le graphique
+            const canvas = document.createElement("canvas");
+            modalList.appendChild(canvas);
+
+            // Création du tableau
+            const table = document.createElement("table");
+            table.innerHTML = "<tr><th>Paramètre</th><th>Valeur</th></tr>";
+            modalList.appendChild(table);
+
+            const deviceRef = ref(db, "devices/" + deviceName);
+
+            // 🔄 Écoute des changements en temps réel
+            onValue(deviceRef, (snapshot) => {
+                const details = snapshot.val() || {};
+
+                // --- Mise à jour du tableau ---
+                table.innerHTML = "<tr><th>Paramètre</th><th>Valeur</th></tr>";
+                for (let key in details) {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `<td>${key}</td><td>${details[key]}</td>`;
+                    table.appendChild(row);
+                }
+
+                // --- Mise à jour du graphique ---
+                const labels = Object.keys(details);
+                const values = Object.values(details).map(v => parseFloat(v) || 0);
+
+                if (!deviceChart) {
+                    // Crée le graphique une seule fois
+                    deviceChart = new Chart(canvas, {
+                        type: "bar",
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: "Valeurs",
+                                data: values,
+                                backgroundColor: "rgba(66,133,244,0.6)"
+                            }]
+                        },
+                        options: { animation: false, responsive: true }
+                    });
+                } else {
+                    // Mets à jour les données sans recréer
+                    deviceChart.data.labels = labels;
+                    deviceChart.data.datasets[0].data = values;
+                    deviceChart.update();
+                }
+            });
+
+            modal.style.display = "flex";
+        }
+
+        // Quand tu fermes la fenêtre → détruire le graphique pour repartir propre
+        closeModal.addEventListener("click", () => {
+            modal.style.display = "none";
+            if (deviceChart) {
+                deviceChart.destroy();
+                deviceChart = null;
+            }
+        });
+
+
+
+        closeModal.addEventListener("click", () => modal.style.display = "none");
+        window.addEventListener("click", e => { if (e.target === modal) modal.style.display = "none"; });
+
+        function showModalList(title, items) {
+            modalTitle.textContent = title;
+            modalList.innerHTML = "";
+            const ul = document.createElement("ul");
+            items.forEach(d => {
+                const li = document.createElement("li");
+                li.textContent = d;
+                li.style.cursor = "pointer";
+                li.addEventListener("click", () => showDeviceDetails(d));
+                ul.appendChild(li);
+            });
+            modalList.appendChild(ul);
+            modal.style.display = "flex";
+        }
+
+        document.getElementById("allDevices").addEventListener("click", () => showModalList("Tous les appareils", allDevices));
+        document.getElementById("normalDevices").addEventListener("click", () => showModalList("Appareils Normaux", normalDevices));
+        document.getElementById("maintenanceDevices").addEventListener("click", () => showModalList("Appareils en maintenance", maintenanceDevices));
+        document.getElementById("criticalDevices").addEventListener("click", () => showModalList("Appareils critiques", criticalDevices));
+
+        document.getElementById("btnAddDevice").addEventListener("click", () => addModal.style.display = "flex");
+        closeAddModal.addEventListener("click", () => addModal.style.display = "none");
+
+        addForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const name = document.getElementById("deviceName").value;
+            const etat = document.getElementById("deviceEtat").value;
+            const temp = document.getElementById("deviceTemp").value;
+            const pression = document.getElementById("devicePression").value;
+            const vibration = document.getElementById("deviceVibration").value;
+
+            const newDevice = { Etat: etat };
+            if (temp) newDevice.Temperature = Number(temp);
+            if (pression) newDevice.Pression = Number(pression);
+            if (vibration) newDevice.Vibration = Number(vibration);
+
+            const deviceRef = ref(db, "devices/" + name);
+            set(deviceRef, newDevice)
+                .then(() => { alert("Appareil ajouté !"); addModal.style.display = "none"; })
+                .catch(err => alert("Erreur : " + err.message));
+        });
+
+        document.querySelector('.search-bar button').addEventListener('click', () => {
+            const query = document.querySelector('.search-bar input').value;
+            alert(`Recherche lancée pour : ${query}`);
+        });
+
+        const profile = document.getElementById('profile');
+        const dropdown = document.getElementById('profileDropdown');
+        profile.addEventListener('click', () => { dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block'; });
+        window.addEventListener('click', e => { if (!e.target.closest('#profile')) dropdown.style.display = 'none'; });
+
+        // 1) Utilitaire : génère une image de graphique à partir des détails (Chart.js)
+        async function makeChartImage(labels, values, width, height) {
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(width);
+            canvas.height = Math.round(height);
+            const ctx = canvas.getContext('2d');
+
+            // Rendu synchrone (pas d'animation, pas de responsive) → toDataURL fiable
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Valeurs',
+                        data: values,
+                        backgroundColor: 'rgba(66,133,244,0.6)'
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    animation: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            const dataUrl = canvas.toDataURL('image/png');
+            chart.destroy();
+            return dataUrl;
+        }
+
+        // 2) Remplace ton listener par celui-ci (même ID : btnGenerateReport)
+        document.getElementById("btnGenerateReport").addEventListener("click", async () => {
+            const overlay = document.getElementById("reportOverlay");
+            overlay.style.display = "flex";  // Affiche "Préparation du rapport..."
+
+            await new Promise(r => setTimeout(r, 1500)); // Petite pause
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'pt', 'a4');
+
+                const page = {
+                    w: doc.internal.pageSize.getWidth(),
+                    h: doc.internal.pageSize.getHeight()
+                };
+                const margin = 40;
+                const usableW = page.w - margin * 2;
+                const startY = margin;
+                let y = startY;
+
+                // Titre du rapport
+                doc.setFontSize(22);
+                doc.text("Rapport des appareils", margin, y);
+                y += 30;
+
+                const deviceNames = Object.keys(devicesDetails);
+
+                for (let i = 0; i < deviceNames.length; i++) {
+                    const name = deviceNames[i];
+                    const details = devicesDetails[name] || {};
+
+                    // Données numériques pour le graphique
+                    const numericEntries = Object.entries(details).filter(([k, v]) =>
+                        typeof v === 'number' || (!isNaN(parseFloat(v)) && isFinite(v))
+                    );
+                    const labels = numericEntries.map(([k]) => k);
+                    const values = numericEntries.map(([_, v]) => parseFloat(v));
+
+                    // Hauteurs estimées
+                    const chartH = labels.length ? 100 : 0;
+                    const rowH = 16;
+                    const rows = Object.keys(details).length;
+                    const tableHeaderH = 18;
+                    const tableTotalH = (labels.length ? chartH + 10 : 0) + tableHeaderH + rows * rowH + 16;
+
+                    // Saut de page si la section complète ne tient pas  imgWidth
+                    if (y + 24 + tableTotalH > page.h - margin) {
+                        doc.addPage();
+                        y = startY;
+                    }
+
+                    y += 20;  // espace supplémentaire avant le titre de l’appareil
+                    // Nom de l'appareil
+                    doc.setFontSize(16);
+                    doc.setTextColor(66, 133, 244);
+                    doc.text(name, page.w / 2, y, { align: "center" });
+                    y += 18;
+                    doc.setTextColor(0, 0, 0);
+
+                    // Graphique (si on a des valeurs numériques)
+                    if (labels.length) {
+                        const imgData = await makeChartImage(labels, values, usableW, chartH);
+                        const imgWidth = usableW * 0.7;  // 70% de la largeur dispo
+                        const xCenter = margin + (usableW - imgWidth) / 2;
+
+                        doc.addImage(imgData, "PNG", xCenter, y, imgWidth, chartH);
+
+                        y += chartH + 10;
+                    }
+
+                    // Tableau : en-tête
+                    doc.setFontSize(12);
+                    doc.setFillColor(66, 133, 244);
+                    doc.setTextColor(255, 255, 255);
+                    doc.rect(margin, y, usableW, tableHeaderH, 'F');
+                    doc.text("Paramètre", margin + 8, y + 13);
+                    doc.text("Valeur", margin + usableW / 2 + 8, y + 13);
+                    y += tableHeaderH;
+
+                    // Lignes du tableau
+                    doc.setTextColor(0, 0, 0);
+                    const entries = Object.entries(details);
+                    for (let r = 0; r < entries.length; r++) {
+                        const [k, v] = entries[r];
+
+                        // zébrage
+                        if (r % 2 === 0) {
+                            doc.setFillColor(245, 245, 245);
+                            doc.rect(margin, y - 2, usableW, rowH, 'F');
+                        }
+
+                        doc.text(String(k), margin + 8, y + 10);
+                        // On coupe la valeur si trop longue (simple protection)  doc.addImage
+                        const valueStr = String(v);
+                        const maxValWidth = usableW / 2 - 16;
+                        const lines = doc.splitTextToSize(valueStr, maxValWidth);
+                        doc.text(lines, margin + usableW / 2 + 8, y + 10);
+
+                        y += rowH;
+
+                        // Saut de page en milieu de tableau si besoin
+                        if (y > page.h - margin - rowH) {
+                            doc.addPage();
+                            y = startY;
+                        }
+                    }
+
+                    y += 16; // espace après l'appareil
+                }
+
+                doc.save("rapport_appareils.pdf");
+            } catch (e) {
+                console.error(e);
+                alert("Erreur lors de la génération du PDF : " + e.message);
+            } finally {
+                overlay.style.display = "none";
+            }
+        });
+
+
+
+    </script>
+</body>
+
+</html>
