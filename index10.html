@@ -16,22 +16,23 @@
     <header class="header">
         <h1>Tableau de bord Ingénieur</h1>
         <div class="profile" id="profile">
-            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profil">
+            <img src="lys.jpeg" alt="Profil">
             <span>Ir. Lysa RUBUGA</span>
             <div class="profile-dropdown" id="profileDropdown">
                 <a href="#">Mon Profil</a>
                 <a href="#">Paramètres</a>
-                <a href="#">Déconnexion</a>
+                <a href="index.html">Déconnexion</a>
             </div>
         </div>
     </header>
 
     <div class="search-container">
         <div class="search-bar">
-            <input type="text" placeholder="Rechercher un appareil par référence, modèle...">
-            <button>🔍</button>
+            <input type="text" id="searchInput" placeholder="Rechercher un appareil par référence, modèle...">
+            <button id="searchBtn">🔍</button>
         </div>
     </div>
+
 
     <div class="stats">
         <div class="stat-item" id="allDevices">
@@ -120,7 +121,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
         import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
-       const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyBkeYhHZc9Na0UHjETg9GABYsDZFx1bLtQ",
             authDomain: "esp32-b9013.firebaseapp.com",
             databaseURL: "https://esp32-b9013-default-rtdb.europe-west1.firebasedatabase.app",
@@ -129,7 +130,7 @@
             messagingSenderId: "547189202345",
             appId: "1:547189202345:web:054bd09f1f7e66f7b538b8"
         };
- 
+
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -497,6 +498,47 @@
             }
         });
 
+        // --- Recherche d'appareils ---
+        const searchInput = document.getElementById("searchInput");
+        const searchBtn = document.getElementById("searchBtn");
+
+        function searchDevices(query) {
+            if (!query) {
+                alert("Veuillez entrer un mot clé de recherche.");
+                return;
+            }
+
+            // On filtre par nom d'appareil ou par valeur de ses détails
+            const results = allDevices.filter(d => {
+                const details = devicesDetails[d] || {};
+                const values = Object.values(details).map(v => String(v).toLowerCase());
+                return (
+                    d.toLowerCase().includes(query.toLowerCase()) ||
+                    values.some(v => v.includes(query.toLowerCase()))
+                );
+            });
+
+            if (results.length > 0) {
+                // On affiche les résultats dans la modale
+                showModalList(`Résultats pour "${query}" (${results.length})`, results);
+            } else {
+                alert(`Aucun appareil trouvé pour : ${query}`);
+            }
+        }
+
+        // 🔍 Recherche quand on clique sur le bouton
+        searchBtn.addEventListener("click", () => {
+            const query = searchInput.value.trim();
+            searchDevices(query);
+        });
+
+        // 🔎 Recherche en appuyant sur Entrée
+        searchInput.addEventListener("keyup", (e) => {
+            if (e.key === "Enter") {
+                const query = searchInput.value.trim();
+                searchDevices(query);
+            }
+        });
 
 
     </script>
