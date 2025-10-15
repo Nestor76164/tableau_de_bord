@@ -109,6 +109,13 @@
     </div>
 
 
+    <div id="notification-container"
+        style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column-reverse; gap: 10px; align-items: flex-end;">
+    </div>
+
+
+
+
     <div id="reportOverlay"
         style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:300;">
         <div style="background:#fff;padding:20px;border-radius:10px;font-size:18px;color:#4285f4;">Préparation du
@@ -221,6 +228,32 @@
             // 🔄 Écoute des changements en temps réel
             onValue(deviceRef, (snapshot) => {
                 const details = snapshot.val() || {};
+
+                // --- Vérification de la température et de l'humidité ---
+                if (details.Temperature !== undefined) {
+                    const temp = parseFloat(details.Temperature);
+                    if (temp > 37) {
+                        showNotification("⚠️ Température supérieure à la normale dans la couveuse !", "temp", true);
+                    } else if (temp < 34) {
+                        showNotification("⚠️ Température inférieure à la normale dans la couveuse !", "temp", true);
+                    } else {
+                        clearNotification("temp");
+                        showNotification("✅ Température redevenue normale.", "temp-ok", false);
+                    }
+                }
+
+                if (details.Humidite !== undefined) {
+                    const hum = parseFloat(details.Humidite);
+                    if (hum > 80) {
+                        showNotification("💧 Humidité supérieure à la normale dans la couveuse !", "hum", true);
+                    } else if (hum < 60) {
+                        showNotification("💧 Humidité inférieure à la normale dans la couveuse !", "hum", true);
+                    } else {
+                        clearNotification("hum");
+                        showNotification("✅ Humidité redevenue normale.", "hum-ok", false);
+                    }
+                }
+
 
                 // Création du span pour le statut (si pas déjà existant)
                 let statusSpan = document.getElementById("systemStatus");
@@ -539,6 +572,56 @@
                 searchDevices(query);
             }
         });
+
+        // === GESTION DES NOTIFICATIONS ===
+        const notifContainer = document.getElementById("notification-container");
+        let activeNotifications = {}; // pour garder la dernière notification persistante
+
+        function showNotification(message, key, persistent = false) {
+            // Supprime une ancienne notif si elle existe (pour pouvoir recréer une nouvelle)
+            if (activeNotifications[key]) {
+                activeNotifications[key].remove();
+                delete activeNotifications[key];
+            }
+
+            const notif = document.createElement("div");
+            notif.textContent = message;
+            notif.style.background = "rgba(255, 255, 255, 0.9)";
+            notif.style.color = "red";
+            notif.style.border = "2px solid red";
+            notif.style.padding = "10px 16px";
+            notif.style.borderRadius = "8px";
+            notif.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
+            notif.style.opacity = "0";
+            notif.style.transition = "opacity 0.3s ease";
+            notifContainer.appendChild(notif);
+
+            // Effet d'apparition
+            requestAnimationFrame(() => notif.style.opacity = "1");
+
+            if (persistent) {
+                // Sauvegarde la notification active
+                activeNotifications[key] = notif;
+            } else {
+                // Disparaît après 1 seconde
+                setTimeout(() => {
+                    notif.style.opacity = "0";
+                    setTimeout(() => notif.remove(), 300);
+                }, 1000);
+            }
+        }
+
+
+        function clearNotification(key) {
+            const notif = activeNotifications[key];
+            if (notif) {
+                notif.style.opacity = "0";
+                setTimeout(() => notif.remove(), 300);
+                delete activeNotifications[key];
+            }
+        }
+
+
 
 
     </script>
